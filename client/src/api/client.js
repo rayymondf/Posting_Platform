@@ -1,0 +1,53 @@
+const jsonHeaders = { 'Content-Type': 'application/json' };
+
+export const api = {
+  me: () => request('/api/auth/me', { allowUnauthorized: true }),
+  register: (username, password) => post('/api/auth/register', { username, password }),
+  login: (username, password) => post('/api/auth/login', { username, password }),
+  guestLogin: () => post('/api/auth/guest-login'),
+  logout: () => post('/api/auth/logout'),
+  getPosts: () => request('/api/posts'),
+  createPost: (content) => post('/api/posts', { content }),
+  toggleLike: (postId) => post(`/api/posts/${postId}/like`),
+  getUsers: (search = '') => {
+    const query = search ? `?search=${encodeURIComponent(search)}` : '';
+    return request(`/api/users${query}`);
+  },
+  getUser: (userId) => request(`/api/users/${userId}`)
+};
+
+async function post(url, body) {
+  return request(url, {
+    method: 'POST',
+    headers: jsonHeaders,
+    body: JSON.stringify(body)
+  });
+}
+
+async function request(url, options = {}) {
+  const { allowUnauthorized, ...fetchOptions } = options;
+  const response = await fetch(url, {
+    credentials: 'same-origin',
+    ...fetchOptions
+  });
+
+  if (allowUnauthorized && response.status === 401) {
+    return null;
+  }
+
+  const data = await parseJson(response);
+
+  if (!response.ok) {
+    throw new Error(data?.error || 'Request failed');
+  }
+
+  return data;
+}
+
+async function parseJson(response) {
+  try {
+    return await response.json();
+  } catch {
+    return null;
+  }
+}

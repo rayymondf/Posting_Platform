@@ -1,301 +1,167 @@
-# Quick Start Guide
+# Quickstart
 
-## 5-Minute Setup
+Use this guide to install, configure, run, and manually test Instigator.
 
-### Step 1: Install Dependencies
-```bash
+## Prerequisites
+
+Install these first:
+
+- Node.js
+- npm
+- PostgreSQL
+
+## 1. Install Dependencies
+
+From the project folder:
+
+```powershell
+cd D:\coding\modern_message
 npm install
 ```
 
-### Step 2: PostgreSQL Setup
+## 2. Create `.env`
 
-**macOS (with Homebrew):**
-```bash
-brew install postgresql@15
-brew services start postgresql@15
-createdb messaging_app
+Copy the safe template into your private local config file:
+
+```powershell
+Copy-Item .env.example .env
 ```
 
-**Windows:**
-- Download from https://www.postgresql.org/download/windows/
-- Run installer
-- Create database via pgAdmin or command line
+Mac/Linux equivalent:
 
-**Linux (Ubuntu/Debian):**
-```bash
-sudo apt-get install postgresql postgresql-contrib
-sudo service postgresql start
-sudo -u postgres createdb messaging_app
-```
-
-### Step 3: Environment Variables
 ```bash
 cp .env.example .env
 ```
 
-Edit `.env`:
+## 3. Configure `.env`
+
+Example values:
+
 ```env
-DATABASE_URL=postgresql://localhost/messaging_app
-SESSION_SECRET=your-random-secret-key
+DATABASE_URL=postgresql://localhost:5432/messaging_app
+SESSION_SECRET=replace_with_a_long_random_secret
 NODE_ENV=development
 PORT=3000
+VITE_PORT=5173
 ```
 
-### Step 4: Start Server
-```bash
-npm run dev
+What each value means:
+
+- `DATABASE_URL`: PostgreSQL connection string. The port here is the database port, usually `5432`.
+- `SESSION_SECRET`: private string used to sign login session cookies.
+- `NODE_ENV=development`: tells Express this is local development, not production.
+- `PORT`: Express backend/API port.
+- `VITE_PORT`: React/Vite frontend port.
+
+These ports are separate:
+
+```txt
+DATABASE_URL port  PostgreSQL database
+PORT               Express backend/API
+VITE_PORT          React frontend
 ```
 
-### Step 5: Visit Application
-Open browser to `http://localhost:3000`
+## Why Both `.env` And `.env.example`?
 
-## Test Accounts
+- `.env` contains your real local values and should never be committed.
+- `.env.example` is a safe template that should be committed so other users know what variables they need.
 
-**Register a New Account:**
-1. Click "Register"
-2. Enter username: `testuser`
-3. Enter password: `testpass123`
-4. Click "Sign In"
+Keep both files.
 
-**Or Use Guest Mode:**
-- Click "Continue as Guest"
-- Full functionality to browse and view
+## 4. Create The Database
 
-## Verifying Database
+If your `DATABASE_URL` uses `messaging_app`, create that database:
 
-Check if database is properly setup:
-
-```bash
-psql messaging_app
-
-# View tables
-\dt
-
-# Check posts
-SELECT * FROM posts;
-
-# Check users
-SELECT id, username FROM users;
-```
-
-## Common Commands
-
-```bash
-# Development with auto-reload
-npm run dev
-
-# Production start
-npm start
-
-# View PostgreSQL logs
-tail -f /usr/local/var/log/postgres.log
-
-# Stop PostgreSQL
-brew services stop postgresql@15
-
-# Reset database (⚠️ deletes all data)
-dropdb messaging_app
+```powershell
 createdb messaging_app
+```
+
+If you use pgAdmin, create a database named `messaging_app`.
+
+The app creates its tables automatically when the server starts.
+
+## 5. Run The App
+
+```powershell
 npm run dev
 ```
 
-## Troubleshooting
+Open:
 
-**Error: "connect ECONNREFUSED 127.0.0.1:5432"**
-- PostgreSQL not running
-- Run: `brew services start postgresql@15` (macOS)
-- Run: `sudo service postgresql start` (Linux)
+```txt
+http://localhost:5173
+```
 
-**Error: "database messaging_app does not exist"**
-- Create database: `createdb messaging_app`
+## Why `npm run dev` Instead Of `node app.js`?
 
-**Error: "listen EADDRINUSE :::3000"**
-- Port 3000 is in use
-- Either change PORT in .env or kill process:
+This project has two parts:
+
+- `server.js` starts the Express API.
+- `client/` contains the React app, which Vite runs in development.
+
+`npm run dev` starts both at the same time. `node app.js` is for smaller projects with one JavaScript entry file named `app.js`; Instigator uses `server.js` plus a Vite React frontend.
+
+## Useful Commands
+
 ```bash
-lsof -ti:3000 | xargs kill -9
+npm run dev         # Run Express and Vite together
+npm run check:ports # Check if local dev ports are busy
+npm run build       # Build React app into dist/
+npm start           # Serve the built app with Express
+npm test            # Build and syntax-check server.js
 ```
 
-**Browser shows blank page**
-- Check browser console (F12) for JavaScript errors
-- Check server logs for API errors
-- Hard refresh browser: Ctrl+Shift+R (Windows/Linux) or Cmd+Shift+R (Mac)
+## Stop The App
 
-## Project Structure Overview
+In the terminal running `npm run dev`, press:
 
-```
-messaging-app/
-├── server.js              # Express server, routes, auth
-├── public/
-│   ├── index.html        # Single page
-│   ├── app.js            # All frontend logic
-│   └── styles.css        # All styling
-├── package.json          # Dependencies
-├── .env                  # Your config (not in git)
-└── README.md             # Full documentation
+```txt
+Ctrl + C
 ```
 
-## What This App Does
+If a port stays busy:
 
-### For Visitors
-- ✅ View all public posts
-- ✅ Search and browse users
-- ✅ View user profiles
-- ✅ Guest mode access
-
-### For Registered Users
-- ✅ Create posts
-- ✅ Like/unlike posts
-- ✅ Comment on posts
-- ✅ Delete own posts
-- ✅ View profile with own posts
-- ✅ Browse other profiles
-
-## Frontend Architecture
-
-Single-page application using vanilla JavaScript:
-
-```javascript
-// One app object manages everything
-app = {
-  user,              // Current logged in user
-  currentPage,       // Which page showing
-  posts,            // All posts data
-  render()          // Renders HTML based on state
-}
-
-// API calls fetch/update data
-API.getPosts()
-API.createPost(content)
-API.likePost(id)
+```powershell
+netstat -ano | findstr :<PORT>
+taskkill /PID <PID_NUMBER> /F
 ```
 
-No frameworks - everything is vanilla JavaScript, HTML, and CSS!
+## Manual Test Checklist
 
-## Database Auto-Setup
+- Sign up with a new username.
+- Log out and sign back in.
+- Continue as Guest.
+- Create a post from Home.
+- Like and unlike posts.
+- Open Profiles and view Guest plus registered users.
+- Open My Profile and confirm only your posts appear.
+- Resize the browser to mobile width and confirm the bottom navigation works.
 
-When you start the server with `npm run dev`:
-1. ✅ Tables are created automatically
-2. ✅ Indexes are added for performance
-3. ✅ Guest user is created
+## Files To Read First
 
-No manual SQL needed!
+- `client/src/App.jsx`: app state, view switching, and API actions.
+- `client/src/api/client.js`: browser-to-server requests.
+- `client/src/components/`: reusable React UI pieces.
+- `client/src/styles/main.css`: layout and component styling.
+- `server.js`: Express app, auth, database setup, and API routes.
 
-## Next Steps
+## Common Fixes
 
-1. **Register** a test account
-2. **Create** a few posts
-3. **Like** and **comment** on posts
-4. **Search** and **visit** user profiles
-5. **Logout** and use guest mode
-6. **Try** the different features
+Port already in use:
 
-## Frontend vs Backend Communication
-
-**Frontend (app.js):**
-- Renders UI based on state
-- Sends API requests
-- Updates state with responses
-- Re-renders when data changes
-
-**Backend (server.js):**
-- Handles authentication
-- Manages database
-- Validates inputs
-- Sends JSON responses
-
-Communication is all REST API - they're completely separate!
-
-## Code Examples
-
-**Creating a Post:**
-```javascript
-// Frontend
-const content = "Hello world!";
-const result = await API.createPost(content);
-app.posts.push(result);
-app.render();
-
-// Backend
-app.post('/api/posts', async (req, res) => {
-  const { content } = req.body;
-  const result = await pool.query(
-    'INSERT INTO posts (user_id, content) VALUES ($1, $2)',
-    [userId, content]
-  );
-  res.json(result.rows[0]);
-});
+```powershell
+npm run check:ports
+netstat -ano | findstr :<PORT>
+taskkill /PID <PID_NUMBER> /F
 ```
 
-**Liking a Post:**
-```javascript
-// Frontend
-await API.likePost(postId);
-await app.loadPosts(); // Refresh
-app.render();
+Database missing:
 
-// Backend - toggle like
-app.post('/api/posts/:id/like', async (req, res) => {
-  const likeExists = await pool.query(
-    'SELECT id FROM likes WHERE post_id = $1 AND user_id = $2',
-    [id, userId]
-  );
-  
-  if (likeExists.rows.length > 0) {
-    await pool.query('DELETE FROM likes WHERE...');
-  } else {
-    await pool.query('INSERT INTO likes VALUES...');
-  }
-});
+```powershell
+createdb messaging_app
 ```
 
-## Performance Tips
+Browser opens but API calls fail:
 
-- Posts load all at once (good for small datasets)
-- Database indexes on created_at for fast sorting
-- Comments loaded on-demand when expanded
-- Session stored in memory (fine for development)
-
-For production with millions of users:
-- Add pagination to posts
-- Cache with Redis
-- Use WebSockets for real-time
-- Use CDN for static files
-
-## Security Notes
-
-✅ **What's Protected:**
-- Passwords hashed with bcrypt
-- SQL injection prevented
-- XSS prevented with HTML escaping
-- Session-based authentication
-
-⚠️ **What You Should Add for Production:**
-- HTTPS/SSL certificate
-- Rate limiting
-- Input validation
-- CORS restrictions
-- Redis session store
-- Environment-specific secrets
-
-## Customization Ideas
-
-- Change colors in `styles.css` (CSS variables at top)
-- Add more post fields (image URL, tags, etc.)
-- Add following system
-- Add direct messages
-- Add real-time updates with Socket.io
-- Add email notifications
-- Add user search filters
-
-## Resources
-
-- **Odin Project**: https://www.theodinproject.com/
-- **Express.js**: https://expressjs.com/
-- **PostgreSQL**: https://www.postgresql.org/
-- **Passport.js**: https://www.passportjs.org/
-- **MDN Web Docs**: https://developer.mozilla.org/
-
----
-
-**You're all set! Happy coding! 🔥**
+- Use the Vite URL in development, usually `http://localhost:5173`.
+- Make sure the Express API is running on your `.env` `PORT`.

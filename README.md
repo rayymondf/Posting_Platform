@@ -1,84 +1,107 @@
-# Post
+# Instigator
 
-A clean social posting dashboard inspired by Twitter/X interaction patterns.
+Instigator is a full-stack social posting app. Users can sign up, sign in, continue as Guest, publish posts, like posts, browse profiles, and view individual profile timelines.
 
-## What this app includes
+The app is intentionally simple: posts and likes are supported, while comments, images, following, and real-time updates are left out for now.
 
-- Landing/home page with clear entry points (Sign in, Sign up, Guest).  
-- Authentication flow for registered accounts and public guest access.  
-- Home dashboard where **all accounts, including guest**, can publish posts.  
-- Like/unlike support on every post.  
-- Profiles directory to view different users and open each profile page.  
-- Personal profile view for the currently logged-in account, showing only their posts.  
-- Modular front-end structure (separate HTML/CSS/JS modules) instead of a single monolithic file.
+## Tech Stack
 
-## Tech stack
+- **Frontend:** React, Vite, JavaScript, CSS
+- **Backend:** Node.js, Express
+- **Authentication:** Passport local strategy, express-session, bcryptjs
+- **Database:** PostgreSQL with the `pg` package
+- **Tooling:** dotenv, nodemon, concurrently, lucide-react
 
-- **Backend:** Node.js, Express, Passport (local strategy), express-session
-- **Database:** PostgreSQL
-- **Auth/crypto:** bcryptjs
-- **Frontend:** Vanilla JavaScript (ES modules), semantic HTML, custom CSS
-- **Dev tooling:** nodemon, dotenv
+## Main Features
 
-## Project structure
+- Public sign-in/sign-up screen with Guest access.
+- Home timeline with posts from all accounts.
+- Guest account can post, like posts, and view profiles.
+- Profiles directory includes Guest and registered users.
+- Profile pages show only that user's posts.
+- My Profile shows the current user's posts.
+- Like/unlike support on each post.
+- Responsive layout with desktop sidebar navigation and mobile bottom navigation.
+
+## Project Structure
 
 ```txt
-public/
+client/
   index.html
-  css/
-    main.css
-  js/
-    api.js
-    main.js
+  src/
+    api/client.js
+    components/
+    styles/main.css
+    App.jsx
+    main.jsx
+scripts/
+  check-dev-ports.js
 server.js
-README.md
+vite.config.mjs
+package.json
+.env.example
+QUICKSTART.md
+PROJECT_OVERVIEW.md
+IMPLEMENTATION_GUIDE.md
 ```
 
-## Setup (step by step)
+## How The App Runs
 
-1. **Clone repo**
-   ```bash
-   git clone <your-repo-url>
-   cd Posting_Dashboard_Project
-   ```
+Instigator has three different services involved during development:
 
-2. **Install dependencies**
-   ```bash
-   npm install
-   ```
+```txt
+React/Vite frontend  http://localhost:5173
+Express backend/API  http://localhost:3000 or your PORT value
+PostgreSQL database  localhost:5432 or your database port
+```
 
-3. **Create environment file**
-   ```bash
-   cp .env.example .env
-   ```
+`npm run dev` starts both the Express backend and Vite frontend. Vite forwards `/api` requests to Express, so the browser can use one frontend URL while still talking to the backend.
 
-4. **Set required variables in `.env`**
-   ```env
-   DATABASE_URL=postgresql://localhost:5432/messaging_app
-   SESSION_SECRET=replace_with_long_random_secret
-   PORT=3000
-   ```
+## Environment Files
 
-5. **Start PostgreSQL** and ensure the target database exists.
+The repo includes `.env.example`, not your real `.env`.
 
-6. **Run the app**
-   ```bash
-   npm run dev
-   ```
+- `.env.example` is committed to GitHub as a safe template.
+- `.env` is your private local config and is ignored by Git.
 
-7. **Open in browser**
-   ```txt
-   http://localhost:3000
-   ```
+Create your `.env` from the template:
 
-## Usage
+```powershell
+Copy-Item .env.example .env
+```
 
-- On landing page, choose **Sign in**, **Sign up**, or **Continue as guest**.
-- Use **Home** to post and like content.
-- Use **Profiles** to browse users and inspect their individual posts.
-- Use **My Profile** to view your own posts timeline.
+Then update values like `DATABASE_URL` and `SESSION_SECRET`.
 
-## Notes
+## Quick Start
 
-- This version intentionally keeps the interface concise and comment-free in the feed interactions (likes only).
-- Server bootstraps database tables automatically and ensures a reusable Guest account exists.
+See [QUICKSTART.md](QUICKSTART.md) for the full setup steps.
+
+Short version:
+
+```powershell
+npm install
+Copy-Item .env.example .env
+npm run dev
+```
+
+Then open:
+
+```txt
+http://localhost:5173
+```
+
+## Scripts
+
+```bash
+npm run dev         # Run Express and Vite together
+npm run check:ports # Check if local dev ports are busy
+npm run build       # Build React into dist/
+npm start           # Start Express and serve the built app
+npm test            # Build frontend and syntax-check server.js
+```
+
+## Documentation
+
+- [QUICKSTART.md](QUICKSTART.md): install, configure, run, and troubleshoot.
+- [PROJECT_OVERVIEW.md](PROJECT_OVERVIEW.md): project concepts, app flow, and API summary.
+- [IMPLEMENTATION_GUIDE.md](IMPLEMENTATION_GUIDE.md): code organization and implementation details.
