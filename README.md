@@ -8,7 +8,7 @@ The app is intentionally simple: posts and likes are supported, while comments, 
 
 - **Frontend:** React, Vite, JavaScript, CSS
 - **Backend:** Node.js, Express
-- **Authentication:** Passport local strategy, express-session, bcryptjs
+- **Authentication:** Passport local strategy, express-session, connect-pg-simple, bcryptjs
 - **Database:** PostgreSQL with the `pg` package
 - **Tooling:** dotenv, nodemon, concurrently, lucide-react
 
@@ -31,6 +31,7 @@ client/
   src/
     api/client.js
     components/
+    routes/paths.js
     styles/main.css
     App.jsx
     main.jsx
@@ -57,6 +58,18 @@ PostgreSQL database  localhost:5432 or your database port
 
 `npm run dev` starts both the Express backend and Vite frontend. Vite forwards `/api` requests to Express, so the browser can use one frontend URL while still talking to the backend.
 
+## Browser Routes
+
+```txt
+/               Public landing page
+/signin         Sign-in screen
+/signup         Create-account screen
+/home           Authenticated home timeline
+/profiles       Profiles directory
+/profiles/:id   Individual profile page
+/me             Current user's profile
+```
+
 ## Environment Files
 
 The repo includes `.env.example`, not your real `.env`.
@@ -71,6 +84,8 @@ Copy-Item .env.example .env
 ```
 
 Then update values like `DATABASE_URL` and `SESSION_SECRET`.
+
+For deployment, `DATABASE_URL` and `SESSION_SECRET` must be set. Login sessions are stored in PostgreSQL in a `user_sessions` table that the app creates automatically.
 
 ## Quick Start
 

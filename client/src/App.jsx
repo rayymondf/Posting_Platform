@@ -6,6 +6,14 @@ import Feed from './components/Feed.jsx';
 import ProfileDirectory from './components/ProfileDirectory.jsx';
 import ProfilePage from './components/ProfilePage.jsx';
 import PublicPage from './components/PublicPage.jsx';
+import {
+  getAuthModeFromRoute,
+  getPathForAuthMode,
+  normalizeRoute,
+  parsePath,
+  ROUTES,
+  writePath
+} from './routes/paths.js';
 
 const initialView = 'feed';
 
@@ -37,13 +45,53 @@ export default function App() {
     await Promise.all([loadPosts(), loadUsers(profileSearch)]);
   }, [loadPosts, loadUsers, profileSearch]);
 
+  const openRoute = useCallback(async (route, options = {}) => {
+    const { replace = false, updateUrl = true } = options;
+    const nextRoute = normalizeRoute(route);
+
+    setError('');
+
+    if (updateUrl) {
+      writePath(nextRoute.path, replace);
+    }
+
+    if (nextRoute.view !== 'profile') {
+      setSelectedProfile(null);
+      setActiveView(nextRoute.view);
+      return;
+    }
+
+    setBusy(true);
+    try {
+      const profile = await api.getUser(nextRoute.userId);
+      setSelectedProfile(profile);
+      setActiveView('profile');
+    } catch (err) {
+      setSelectedProfile(null);
+      setActiveView('profiles');
+      setError(err.message);
+      if (updateUrl || nextRoute.view === 'profile') {
+        writePath(ROUTES.profiles, true);
+      }
+    } finally {
+      setBusy(false);
+    }
+  }, []);
+
   useEffect(() => {
     async function boot() {
       try {
+        const route = parsePath(window.location.pathname);
         const session = await api.me();
         if (session?.user) {
           setCurrentUser(session.user);
           await Promise.all([loadPosts(), loadUsers()]);
+          await openRoute(route, { replace: true });
+        } else {
+          setAuthMode(getAuthModeFromRoute(route));
+          if (!route.publicMode) {
+            writePath('/', true);
+          }
         }
       } catch (err) {
         setError(err.message);
@@ -53,7 +101,24 @@ export default function App() {
     }
 
     boot();
-  }, [loadPosts, loadUsers]);
+  }, [loadPosts, loadUsers, openRoute]);
+
+  useEffect(() => {
+    function handlePopState() {
+      const route = parsePath(window.location.pathname);
+
+      if (!currentUser) {
+        setError('');
+        setAuthMode(getAuthModeFromRoute(route));
+        return;
+      }
+
+      openRoute(route, { updateUrl: false });
+    }
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, [currentUser, openRoute]);
 
   const myPosts = useMemo(() => {
     if (!currentUser) return [];
@@ -73,8 +138,8 @@ export default function App() {
         ? await api.register(username, password)
         : await api.login(username, password);
       setCurrentUser(response.user);
-      setActiveView(initialView);
       await loadAppData();
+      await openRoute({ view: initialView }, { replace: true });
     } catch (err) {
       setError(err.message);
     } finally {
@@ -88,8 +153,8 @@ export default function App() {
     try {
       const response = await api.guestLogin();
       setCurrentUser(response.user);
-      setActiveView(initialView);
       await loadAppData();
+      await openRoute({ view: initialView }, { replace: true });
     } catch (err) {
       setError(err.message);
     } finally {
@@ -106,6 +171,7 @@ export default function App() {
       setSelectedProfile(null);
       setActiveView(initialView);
       setAuthMode('landing');
+      writePath('/', true);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -119,6 +185,19 @@ export default function App() {
     try {
       const post = await api.createPost(content);
       setPosts((currentPosts) => [post, ...currentPosts]);
+      setUsers((currentUsers) => currentUsers.map((user) => (
+        user.id === post.user_id
+          ? { ...user, posts_count: Number(user.posts_count || 0) + 1 }
+          : user
+      )));
+      setSelectedProfile((profile) => {
+        if (profile?.id !== post.user_id) return profile;
+        return {
+          ...profile,
+          posts_count: Number(profile.posts_count || 0) + 1,
+          posts: [post, ...(profile.posts || [])]
+        };
+      });
     } catch (err) {
       setError(err.message);
     } finally {
@@ -159,25 +238,18 @@ export default function App() {
   }
 
   async function handleOpenProfile(userId) {
-    setBusy(true);
-    setError('');
-    try {
-      const profile = await api.getUser(userId);
-      setSelectedProfile(profile);
-      setActiveView('profile');
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setBusy(false);
-    }
+    await openRoute({ view: 'profile', userId });
   }
 
-  function handleNavigate(view) {
+  async function handleNavigate(view) {
     setError('');
-    if (view !== 'profile') {
-      setSelectedProfile(null);
-    }
-    setActiveView(view);
+    await openRoute({ view });
+  }
+
+  function handleAuthModeChange(mode) {
+    setError('');
+    setAuthMode(mode);
+    writePath(getPathForAuthMode(mode), false);
   }
 
   if (loading) {
@@ -193,10 +265,7 @@ export default function App() {
     return (
       <PublicPage
         mode={authMode}
-        onModeChange={(mode) => {
-          setError('');
-          setAuthMode(mode);
-        }}
+        onModeChange={handleAuthModeChange}
         onSubmit={handleAuth}
         onGuest={handleGuestLogin}
         error={error}

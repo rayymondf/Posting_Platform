@@ -23,17 +23,22 @@ export default function AppShell({
           Instigator
         </button>
         <nav aria-label="Primary">
-          {navItems.map((item) => (
-            <button
-              className={activeView === item.id ? 'nav-item active' : 'nav-item'}
-              key={item.id}
-              type="button"
-              onClick={() => onNavigate(item.id)}
-            >
-              <item.icon size={21} aria-hidden="true" />
-              <span>{item.label}</span>
-            </button>
-          ))}
+          {navItems.map((item) => {
+            const isActive = activeView === item.id || (activeView === 'profile' && item.id === 'profiles');
+
+            return (
+              <button
+                aria-current={isActive ? 'page' : undefined}
+                className={isActive ? 'nav-item active' : 'nav-item'}
+                key={item.id}
+                type="button"
+                onClick={() => onNavigate(item.id)}
+              >
+                <item.icon size={21} aria-hidden="true" />
+                <span>{item.label}</span>
+              </button>
+            );
+          })}
         </nav>
         <div className="sidebar-footer">
           <button className="account-pill" type="button" onClick={() => onNavigate('me')}>
@@ -72,17 +77,22 @@ export default function AppShell({
       </aside>
 
       <nav className="mobile-nav" aria-label="Mobile">
-        {navItems.map((item) => (
-          <button
-            className={activeView === item.id ? 'active' : ''}
-            key={item.id}
-            type="button"
-            onClick={() => onNavigate(item.id)}
-            aria-label={item.label}
-          >
-            <item.icon size={22} aria-hidden="true" />
-          </button>
-        ))}
+        {navItems.map((item) => {
+          const isActive = activeView === item.id || (activeView === 'profile' && item.id === 'profiles');
+
+          return (
+            <button
+              aria-current={isActive ? 'page' : undefined}
+              aria-label={item.label}
+              className={isActive ? 'active' : ''}
+              key={item.id}
+              type="button"
+              onClick={() => onNavigate(item.id)}
+            >
+              <item.icon size={22} aria-hidden="true" />
+            </button>
+          );
+        })}
       </nav>
     </div>
   );

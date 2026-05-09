@@ -53,6 +53,8 @@ What each value means:
 - `PORT`: Express backend/API port.
 - `VITE_PORT`: React/Vite frontend port.
 
+For deployment, `DATABASE_URL` and `SESSION_SECRET` must be real values. The app stores sessions in PostgreSQL and creates a `user_sessions` table automatically.
+
 These ports are separate:
 
 ```txt
@@ -90,6 +92,18 @@ Open:
 
 ```txt
 http://localhost:5173
+```
+
+Useful browser routes:
+
+```txt
+/               Public landing page
+/signin         Sign-in screen
+/signup         Create-account screen
+/home           Home timeline
+/profiles       Profiles directory
+/profiles/:id   Individual profile page
+/me             My Profile
 ```
 
 ## Why `npm run dev` Instead Of `node app.js`?
@@ -134,6 +148,8 @@ taskkill /PID <PID_NUMBER> /F
 - Create a post from Home.
 - Like and unlike posts.
 - Open Profiles and view Guest plus registered users.
+- Click a profile and confirm the URL changes to `/profiles/:id`.
+- Use the browser Back button and confirm it returns to the previous route.
 - Open My Profile and confirm only your posts appear.
 - Resize the browser to mobile width and confirm the bottom navigation works.
 
@@ -141,6 +157,7 @@ taskkill /PID <PID_NUMBER> /F
 
 - `client/src/App.jsx`: app state, view switching, and API actions.
 - `client/src/api/client.js`: browser-to-server requests.
+- `client/src/routes/paths.js`: browser route parsing and URL updates.
 - `client/src/components/`: reusable React UI pieces.
 - `client/src/styles/main.css`: layout and component styling.
 - `server.js`: Express app, auth, database setup, and API routes.

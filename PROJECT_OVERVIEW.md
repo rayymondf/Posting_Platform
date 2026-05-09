@@ -8,6 +8,7 @@ Instigator is a small posting dashboard built to practice full-stack JavaScript 
 - REST API communication with `fetch`.
 - Express routes and middleware.
 - Session-based authentication.
+- PostgreSQL-backed session storage.
 - PostgreSQL persistence.
 - Environment-based configuration with dotenv.
 
@@ -72,6 +73,18 @@ The database port is part of `DATABASE_URL`. It is not the same as `PORT` or `VI
 - Profiles: searchable directory.
 - Profile pages: profile header plus that user's posts.
 
+## Browser Routes
+
+```txt
+/               Public landing page
+/signin         Sign-in screen
+/signup         Create-account screen
+/home           Authenticated home timeline
+/profiles       Profiles directory
+/profiles/:id   Individual profile page
+/me             Current user's profile
+```
+
 ## API Summary
 
 ```txt
@@ -95,4 +108,3 @@ Comment routes exist in the server from earlier work, but comments are intention
 - No image uploads.
 - No following system.
 - No real-time updates.
-- No production session store yet.

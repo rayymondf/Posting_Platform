@@ -26,10 +26,16 @@ async function post(url, body) {
 
 async function request(url, options = {}) {
   const { allowUnauthorized, ...fetchOptions } = options;
-  const response = await fetch(url, {
-    credentials: 'same-origin',
-    ...fetchOptions
-  });
+  let response;
+
+  try {
+    response = await fetch(url, {
+      credentials: 'same-origin',
+      ...fetchOptions
+    });
+  } catch {
+    throw new Error('Unable to reach the server. Make sure the app backend is running.');
+  }
 
   if (allowUnauthorized && response.status === 401) {
     return null;
@@ -38,7 +44,7 @@ async function request(url, options = {}) {
   const data = await parseJson(response);
 
   if (!response.ok) {
-    throw new Error(data?.error || 'Request failed');
+    throw new Error(data?.error || response.statusText || 'Request failed');
   }
 
   return data;

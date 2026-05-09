@@ -9,6 +9,7 @@ Important files:
 - `client/src/main.jsx`: mounts React into the HTML page.
 - `client/src/App.jsx`: owns top-level state and app actions.
 - `client/src/api/client.js`: centralizes all `fetch` requests.
+- `client/src/routes/paths.js`: centralizes browser route parsing and URL updates.
 - `client/src/components/`: reusable UI pieces.
 - `client/src/styles/main.css`: layout, spacing, colors, responsive behavior.
 
@@ -18,6 +19,7 @@ Important files:
 - `useEffect`: checks the current session when the app first loads.
 - `useCallback`: keeps data-loading functions stable.
 - `useMemo`: derives the current user's posts from the full post list.
+- Browser History API: keeps `/home`, `/profiles`, `/profiles/:id`, `/me`, `/signin`, and `/signup` in sync with app state.
 - Props: parent components pass data and event handlers into child components.
 - Conditional rendering: the app shows public auth screens, Home, Profiles, My Profile, or another profile depending on state.
 
@@ -42,6 +44,7 @@ It handles:
 - Connecting to PostgreSQL with `pg`.
 - Creating missing database tables on startup.
 - Ensuring the Guest account exists.
+- Storing login sessions in PostgreSQL with `connect-pg-simple`.
 - Serving API routes.
 - Serving the built React app from `dist/` after `npm run build`.
 
@@ -53,6 +56,7 @@ Authentication uses Passport local strategy plus `express-session`.
 - Login checks username and password.
 - Guest login logs into the reusable Guest user.
 - Session cookies keep the user logged in between requests.
+- Session records are stored in the `user_sessions` table, which is created automatically.
 - `SESSION_SECRET` signs the session cookie and should be private.
 
 ## API Data Contracts

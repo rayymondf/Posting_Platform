@@ -3,6 +3,7 @@ const express = require('express');
 const path = require('path');
 const fs = require('fs');
 const session = require('express-session');
+const PgSession = require('connect-pg-simple')(session);
 const passport = require('passport');
 const LocalStrategy = require('passport-local').Strategy;
 const bcrypt = require('bcryptjs');
@@ -13,10 +14,26 @@ const app = express();
 const clientDistPath = path.join(__dirname, 'dist');
 const POST_MAX_LENGTH = 280;
 const COMMENT_MAX_LENGTH = 280;
+const isProduction = process.env.NODE_ENV === 'production';
+const databaseUrl = process.env.DATABASE_URL || (isProduction ? null : 'postgresql://localhost:5432/messaging_app');
+const sessionSecret = process.env.SESSION_SECRET || (isProduction ? null : 'your-secret-key-change-in-production');
+
+if (!databaseUrl) {
+  throw new Error('DATABASE_URL is required when NODE_ENV=production');
+}
+
+if (!sessionSecret) {
+  throw new Error('SESSION_SECRET is required when NODE_ENV=production');
+}
 
 // ============= Database Setup =============
 const pool = new pg.Pool({
-  connectionString: process.env.DATABASE_URL || 'postgresql://localhost:5432/messaging_app'
+  connectionString: databaseUrl
+});
+const sessionStore = new PgSession({
+  pool,
+  tableName: 'user_sessions',
+  createTableIfMissing: true
 });
 
 // Initialize database tables
@@ -68,18 +85,25 @@ async function initializeDatabase() {
 }
 
 // ============= Middleware =============
+if (isProduction) {
+  app.set('trust proxy', 1);
+}
+
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(clientDistPath));
 
 app.use(session({
-  secret: process.env.SESSION_SECRET || 'your-secret-key-change-in-production',
+  store: sessionStore,
+  name: 'instigator.sid',
+  secret: sessionSecret,
   resave: false,
   saveUninitialized: false,
   cookie: { 
-    secure: process.env.NODE_ENV === 'production',
+    secure: isProduction,
     httpOnly: true,
+    sameSite: 'lax',
     maxAge: 1000 * 60 * 60 * 24 * 7
   }
 }));

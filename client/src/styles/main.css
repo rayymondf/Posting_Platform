@@ -62,6 +62,16 @@ button {
   color: var(--muted);
 }
 
+.error-boundary h1,
+.error-boundary p {
+  margin: 0;
+}
+
+.error-boundary h1 {
+  color: var(--text);
+  font-size: 1.35rem;
+}
+
 .brand-mark {
   display: grid;
   width: 54px;
