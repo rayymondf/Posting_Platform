@@ -1,129 +1,216 @@
 # Implementation Guide
 
+## Repository Layout
+
+```
+server.js                   Express app — single file, ~500 lines
+vite.config.mjs             Vite config
+client/
+  index.html
+  src/
+    main.jsx                React entry — mounts App inside ErrorBoundary
+    App.jsx                 All top-level state, data loading, and action handlers
+    api/client.js           Thin fetch wrapper — all API calls in one place
+    routes/paths.js         URL parsing, route normalization, history writes
+    components/
+      AppShell.jsx          Authenticated shell — sidebar, mobile nav, layout
+      PublicPage.jsx        Landing, sign-in, sign-up, guest entry
+      Feed.jsx              Home timeline
+      Composer.jsx          Post creation form
+      PostCard.jsx          Single post with like button
+      ProfileDirectory.jsx  Searchable user list
+      ProfilePage.jsx       Profile header + user's posts
+      MessagesView.jsx      DM thread list and message thread
+      Avatar.jsx            Initials-based avatar
+      Button.jsx            Styled button with optional icon
+      EmptyState.jsx        Empty list placeholder
+      ErrorBoundary.jsx     React error boundary
+    utils/
+      format.js             formatDate, initials, pluralize
+    styles/main.css         All styles — layout, components, responsive
+scripts/
+  check-dev-ports.js        Checks PORT and VITE_PORT before dev starts
+```
+
+---
+
 ## Frontend
 
-The frontend is a Vite React app in `client/`.
+### State Management
 
-Important files:
+All application state lives in `App.jsx` using React hooks. There is no external state library.
 
-- `client/src/main.jsx`: mounts React into the HTML page.
-- `client/src/App.jsx`: owns top-level state and app actions.
-- `client/src/api/client.js`: centralizes all `fetch` requests.
-- `client/src/routes/paths.js`: centralizes browser route parsing and URL updates.
-- `client/src/components/`: reusable UI pieces.
-- `client/src/styles/main.css`: layout, spacing, colors, responsive behavior.
+| State | Type | Purpose |
+|---|---|---|
+| `currentUser` | object \| null | Authenticated user from session |
+| `posts` | array | All posts for the home timeline |
+| `users` | array | User directory |
+| `selectedProfile` | object \| null | Currently viewed profile |
+| `activeView` | string | Which view is rendered |
+| `loading` | boolean | Initial session check in progress |
+| `busy` | boolean | Any async action in progress |
+| `error` | string | Last error message |
 
-## React Concepts Used
+### Hooks Used
 
-- `useState`: stores current user, active view, posts, users, selected profile, loading, busy, and error state.
-- `useEffect`: checks the current session when the app first loads.
-- `useCallback`: keeps data-loading functions stable.
-- `useMemo`: derives the current user's posts from the full post list.
-- Browser History API: keeps `/home`, `/profiles`, `/profiles/:id`, `/me`, `/signin`, and `/signup` in sync with app state.
-- Props: parent components pass data and event handlers into child components.
-- Conditional rendering: the app shows public auth screens, Home, Profiles, My Profile, or another profile depending on state.
+- `useState` — all state above
+- `useEffect` — session restore on mount; popstate listener for browser back/forward
+- `useCallback` — stable references for `loadPosts`, `loadUsers`, `openRoute`
+- `useMemo` — derives `myPosts` from the full posts array without re-filtering on every render
 
-## Component Roles
+### Routing
 
-- `PublicPage`: landing, sign-in, sign-up, and guest entry.
-- `AppShell`: shared authenticated layout with sidebar, timeline area, account panel, and mobile nav.
-- `Feed`: home timeline.
-- `Composer`: post creation form.
-- `PostCard`: displays one post and like button.
-- `ProfileDirectory`: searchable users list.
-- `ProfilePage`: profile header and profile-specific posts.
-- `MessagesView`: direct-message UI (frontend complete; backend messaging routes not yet implemented — API calls return 404).
-- `Avatar`, `Button`, `EmptyState`: small reusable UI components.
+No React Router. `paths.js` exports:
+
+- `parsePath(pathname)` — maps a URL to a `{ view, userId?, path, publicMode? }` object
+- `normalizeRoute(route)` — validates and normalizes a route object
+- `writePath(path, replace)` — calls `pushState` or `replaceState`
+
+`App.jsx` listens to `popstate` to handle browser back/forward. Express serves `index.html` for all non-API routes so direct URL access works.
+
+### API Client
+
+`api/client.js` exports a single `api` object. Every method calls a shared `request()` function that:
+
+- Attaches `credentials: 'same-origin'` to every request
+- Parses JSON responses
+- Throws with the server's `error` message on non-2xx responses
+- Returns `null` on 401 when `allowUnauthorized` is set (used by `api.me()` on load)
+
+---
 
 ## Backend
 
-The backend is `server.js`.
+### server.js Structure
 
-It handles:
+1. **Config** — dotenv, constants, production guards
+2. **Database** — `pg.Pool`, `PgSession` store, `initializeDatabase()` creates all tables
+3. **Middleware** — CORS, JSON body parser, static files, session, Passport
+4. **Passport** — local strategy, `serializeUser`, `deserializeUser`
+5. **Guest setup** — `ensureGuestUser()` upserts the shared Guest account on startup
+6. **Routes** — auth, posts, likes, comments, users, conversations, messages
+7. **SPA fallback** — `GET *` serves `dist/index.html`
+8. **Error handler** — catches unhandled errors, returns JSON
+9. **Startup** — `initializeDatabase()` → `ensureGuestUser()` → `app.listen()`
 
-- Loading `.env` with dotenv.
-- Connecting to PostgreSQL with `pg`.
-- Creating missing database tables on startup.
-- Ensuring the Guest account exists.
-- Storing login sessions in PostgreSQL with `connect-pg-simple`.
-- Serving API routes.
-- Serving the built React app from `dist/` after `npm run build`.
+### Authentication Flow
 
-## Authentication
+```
+POST /api/auth/register
+  validate input → check username uniqueness → bcrypt.hash → INSERT user → req.login()
 
-Authentication uses Passport local strategy plus `express-session`.
+POST /api/auth/login
+  passport.authenticate('local') → bcrypt.compare → req.login() → return user
 
-- Register hashes passwords with bcryptjs.
-- Login checks username and password.
-- Guest login logs into the reusable Guest user.
-- Session cookies keep the user logged in between requests.
-- Session records are stored in the `user_sessions` table, which is created automatically.
-- `SESSION_SECRET` signs the session cookie and should be private.
+POST /api/auth/guest-login
+  look up Guest user by ID → req.login() → return user
 
-## API Data Contracts
-
-Posts returned to React include:
-
-```txt
-id
-user_id
-username
-content
-created_at
-likes_count
-comments_count
-user_liked
+POST /api/auth/logout
+  req.logout() → destroy session
 ```
 
-Users returned to React include:
+### Authorization Pattern
 
-```txt
-id
-username
-created_at
-posts_count
+Protected routes use an inline middleware before the async handler:
+
+```js
+app.post('/api/posts', (req, res, next) => {
+  if (!req.isAuthenticated()) return res.status(401).json({ error: 'Must be logged in' });
+  next();
+}, async (req, res) => { ... });
 ```
 
-Profile responses include the user fields plus `posts`.
+Ownership checks (delete post, delete message) query the resource first and compare `user_id` / `sender_id` to `req.user.id`.
 
-## Development Scripts
+### Like Toggle
 
-```bash
-npm run dev         # Starts backend and frontend
-npm run server:dev  # Starts only Express with nodemon
-npm run client:dev  # Starts only Vite
-npm run check:ports # Checks PORT and VITE_PORT availability
-npm run build       # Builds React into dist/
-npm start           # Starts Express and serves dist/
-npm test            # Builds frontend and syntax-checks server.js
+`POST /api/posts/:id/like` checks for an existing like row:
+- If found → `DELETE` (unlike)
+- If not found → `INSERT` (like)
+
+Returns the new `likes_count` and `user_liked` boolean. The `UNIQUE(post_id, user_id)` constraint on the `likes` table prevents race-condition duplicates.
+
+### Conversation Deduplication
+
+`POST /api/conversations` always stores the lower user ID as `user1_id`:
+
+```js
+const [user1_id, user2_id] = userId < recipientId ? [userId, recipientId] : [recipientId, userId];
 ```
 
-## Adding A Feature
+Combined with `UNIQUE(user1_id, user2_id)` and `ON CONFLICT ... DO UPDATE SET id = conversations.id`, this guarantees one thread per pair regardless of who initiates.
 
-1. Add or update the Express route in `server.js`.
-2. Add the matching API function in `client/src/api/client.js`.
-3. Add or update React state/actions in `App.jsx`.
-4. Add or update components in `client/src/components/`.
-5. Style the UI in `client/src/styles/main.css`.
-6. Run `npm test`.
+---
+
+## API Data Shapes
+
+**Post**
+```json
+{
+  "id": 1,
+  "user_id": 3,
+  "username": "alice",
+  "content": "Hello world",
+  "created_at": "2026-05-23T17:00:00.000Z",
+  "likes_count": 4,
+  "comments_count": 1,
+  "user_liked": false
+}
+```
+
+**User / Profile**
+```json
+{
+  "id": 3,
+  "username": "alice",
+  "created_at": "2026-05-01T10:00:00.000Z",
+  "posts_count": 12,
+  "posts": [ ... ]
+}
+```
+
+**Message**
+```json
+{
+  "id": 7,
+  "sender_id": 3,
+  "content": "Hey!",
+  "created_at": "2026-05-23T17:10:00.000Z"
+}
+```
+
+**Conversation**
+```json
+{
+  "id": 2,
+  "other_user_id": 5,
+  "other_username": "bob",
+  "last_message": "See you then"
+}
+```
+
+---
+
+## Adding a Feature
+
+1. Add the DB table or column in `initializeDatabase()` in `server.js`.
+2. Add the Express route in `server.js`.
+3. Add the API function in `client/src/api/client.js`.
+4. Add state and action handlers in `App.jsx`.
+5. Add or update components in `client/src/components/`.
+6. Run `npm test` to verify build and syntax.
 7. Manually test the browser flow.
 
-## Verification
+---
 
-Run:
+## Scripts
 
 ```bash
-npm test
+npm run dev          # Start Express (nodemon) + Vite concurrently
+npm run server:dev   # Express only
+npm run client:dev   # Vite only
+npm run check:ports  # Verify PORT and VITE_PORT are free
+npm run build        # Production build into dist/
+npm start            # Serve dist/ with Express
+npm test             # Build + node --check server.js
 ```
-
-Then manually test:
-
-- Sign up.
-- Sign in.
-- Guest login.
-- Create post.
-- Like/unlike post.
-- Browse profiles.
-- Open another profile.
-- Open My Profile.
-- Resize to mobile width.

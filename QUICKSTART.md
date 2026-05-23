@@ -1,184 +1,113 @@
 # Quickstart
 
-Use this guide to install, configure, run, and manually test Instigator.
-
 ## Prerequisites
 
-Install these first:
-
-- Node.js
+- Node.js 18+
 - npm
-- PostgreSQL
+- PostgreSQL (running locally)
 
-## 1. Install Dependencies
+---
 
-From the project folder:
+## Setup
 
-```powershell
-cd posting_dashboard_project
+**1. Install dependencies**
+
+```bash
 npm install
 ```
 
-## 2. Create `.env`
-
-Copy the safe template into your private local config file:
-
-```powershell
-Copy-Item .env.example .env
-```
-
-Mac/Linux equivalent:
+**2. Create your `.env`**
 
 ```bash
-cp .env.example .env
+cp .env.example .env          # Mac/Linux
+Copy-Item .env.example .env   # Windows PowerShell
 ```
 
-## 3. Configure `.env`
-
-Example values:
+**3. Configure `.env`**
 
 ```env
-DATABASE_URL=postgresql://localhost:5432/messaging_app
-SESSION_SECRET=replace_with_a_long_random_secret
+DATABASE_URL=postgresql://localhost:5432/instigator
+SESSION_SECRET=replace_with_a_long_random_string
 NODE_ENV=development
 PORT=3000
 VITE_PORT=5173
 ```
 
-What each value means:
+| Variable | Description |
+|---|---|
+| `DATABASE_URL` | PostgreSQL connection string — the port here is the DB port, not `PORT` |
+| `SESSION_SECRET` | Signs session cookies — keep this private |
+| `NODE_ENV` | Set to `production` on Render, `development` locally |
+| `PORT` | Express API port |
+| `VITE_PORT` | Vite dev server port |
 
-- `DATABASE_URL`: PostgreSQL connection string. The port here is the database port, usually `5432`.
-- `SESSION_SECRET`: private string used to sign login session cookies.
-- `NODE_ENV=development`: tells Express this is local development, not production.
-- `PORT`: Express backend/API port.
-- `VITE_PORT`: React/Vite frontend port.
+**4. Create the database**
 
-For deployment, `DATABASE_URL` and `SESSION_SECRET` must be real values. The app stores sessions in PostgreSQL and creates a `user_sessions` table automatically.
-
-These ports are separate:
-
-```txt
-DATABASE_URL port  PostgreSQL database
-PORT               Express backend/API
-VITE_PORT          React frontend
+```bash
+createdb instigator
 ```
 
-## Why Both `.env` And `.env.example`?
+The app creates all tables automatically on first run.
 
-- `.env` contains your real local values and should never be committed.
-- `.env.example` is a safe template that should be committed so other users know what variables they need.
+**5. Start the app**
 
-Keep both files.
-
-## 4. Create The Database
-
-If your `DATABASE_URL` uses `messaging_app`, create that database:
-
-```powershell
-createdb messaging_app
-```
-
-If you use pgAdmin, create a database named `messaging_app`.
-
-The app creates its tables automatically when the server starts.
-
-## 5. Run The App
-
-```powershell
+```bash
 npm run dev
 ```
 
-Open:
+Open `http://localhost:5173`.
 
-```txt
-http://localhost:5173
-```
+---
 
-Useful browser routes:
-
-```txt
-/               Public landing page
-/signin         Sign-in screen
-/signup         Create-account screen
-/home           Home timeline
-/profiles       Profiles directory
-/profiles/:id   Individual profile page
-/me             My Profile
-```
-
-## Why `npm run dev` Instead Of `node app.js`?
-
-This project has two parts:
-
-- `server.js` starts the Express API.
-- `client/` contains the React app, which Vite runs in development.
-
-`npm run dev` starts both at the same time. `node app.js` is for smaller projects with one JavaScript entry file named `app.js`; Instigator uses `server.js` plus a Vite React frontend.
-
-## Useful Commands
+## Scripts
 
 ```bash
-npm run dev         # Run Express and Vite together
-npm run check:ports # Check if local dev ports are busy
-npm run build       # Build React app into dist/
-npm start           # Serve the built app with Express
-npm test            # Build and syntax-check server.js
+npm run dev          # Start Express + Vite together
+npm run build        # Build React into dist/
+npm start            # Serve the built app with Express
+npm test             # Build + syntax-check server.js
+npm run check:ports  # Check if dev ports are already in use
 ```
 
-## Stop The App
+---
 
-In the terminal running `npm run dev`, press:
+## Troubleshooting
 
-```txt
-Ctrl + C
+**Port already in use**
+
+```bash
+npm run check:ports
 ```
 
-If a port stays busy:
-
+Windows — find and kill the process:
 ```powershell
 netstat -ano | findstr :<PORT>
-taskkill /PID <PID_NUMBER> /F
+taskkill /PID <PID> /F
 ```
+
+**Database not found**
+
+```bash
+createdb instigator
+```
+
+**API calls fail in the browser**
+
+- Use the Vite URL (`http://localhost:5173`) in development, not the Express port directly.
+- Confirm Express is running — check the terminal for `Server running on http://localhost:3000`.
+
+---
 
 ## Manual Test Checklist
 
-- Sign up with a new username and a password of at least 6 characters.
-- Log out and sign back in.
-- Continue as Guest.
-- Create a post from Home.
-- Like and unlike posts.
-- Open Profiles and view Guest plus registered users.
-- Click a profile and confirm the URL changes to `/profiles/:id`.
-- Use the browser Back button and confirm it returns to the previous route.
-- Open My Profile and confirm only your posts appear.
-- Resize the browser to mobile width and confirm the bottom navigation works.
-
-## Files To Read First
-
-- `client/src/App.jsx`: app state, view switching, and API actions.
-- `client/src/api/client.js`: browser-to-server requests.
-- `client/src/routes/paths.js`: browser route parsing and URL updates.
-- `client/src/components/`: reusable React UI pieces.
-- `client/src/styles/main.css`: layout and component styling.
-- `server.js`: Express app, auth, database setup, and API routes.
-
-## Common Fixes
-
-Port already in use:
-
-```powershell
-npm run check:ports
-netstat -ano | findstr :<PORT>
-taskkill /PID <PID_NUMBER> /F
-```
-
-Database missing:
-
-```powershell
-createdb messaging_app
-```
-
-Browser opens but API calls fail:
-
-- Use the Vite URL in development, usually `http://localhost:5173`.
-- Make sure the Express API is running on your `.env` `PORT`.
+- [ ] Sign up with a new username (password must be at least 6 characters)
+- [ ] Log out and sign back in
+- [ ] Continue as Guest
+- [ ] Create a post from Home
+- [ ] Like and unlike a post
+- [ ] Open Profiles — search for a user
+- [ ] Click a profile — confirm URL changes to `/profiles/:id`
+- [ ] Press browser Back — confirm it returns to the previous view
+- [ ] Open My Profile — confirm only your posts appear
+- [ ] Open Messages — start a DM thread with another user
+- [ ] Resize to mobile width — confirm bottom navigation appears
