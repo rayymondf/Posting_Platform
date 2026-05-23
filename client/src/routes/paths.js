@@ -5,6 +5,7 @@ export const ROUTES = {
   home: '/home',
   profiles: '/profiles',
   me: '/me',
+  messages: '/messages',
   profile: (userId) => `/profiles/${Number(userId)}`
 };
 
@@ -26,6 +27,7 @@ export function parsePath(pathname) {
   if (path === ROUTES.home) return { view: 'feed', path: ROUTES.home };
   if (path === ROUTES.profiles) return { view: 'profiles', path: ROUTES.profiles };
   if (path === ROUTES.me) return { view: 'me', path: ROUTES.me };
+  if (path === ROUTES.messages) return { view: 'messages', path: ROUTES.messages };
 
   const profileMatch = path.match(/^\/profiles\/(\d+)$/);
   if (profileMatch) {
@@ -49,6 +51,7 @@ export function parsePath(pathname) {
 export function normalizeRoute(route) {
   if (route.view === 'profiles') return { view: 'profiles', path: ROUTES.profiles };
   if (route.view === 'me') return { view: 'me', path: ROUTES.me };
+  if (route.view === 'messages') return { view: 'messages', path: ROUTES.messages };
 
   if (route.view === 'profile' && isValidUserId(Number(route.userId))) {
     const userId = Number(route.userId);

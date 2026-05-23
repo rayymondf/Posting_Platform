@@ -9,12 +9,11 @@ export default function Composer({ currentUser, onSubmit, disabled }) {
   const [content, setContent] = useState('');
   const remaining = maxLength - content.length;
 
-  async function handleSubmit(event) {
-    event.preventDefault();
-    const nextContent = content.trim();
-    if (!nextContent || disabled) return;
-
-    await onSubmit(nextContent);
+  async function handleSubmit(e) {
+    e.preventDefault();
+    const text = content.trim();
+    if (!text || disabled) return;
+    await onSubmit(text);
     setContent('');
   }
 
@@ -25,7 +24,7 @@ export default function Composer({ currentUser, onSubmit, disabled }) {
         <textarea
           value={content}
           maxLength={maxLength}
-          onChange={(event) => setContent(event.target.value)}
+          onChange={(e) => setContent(e.target.value)}
           placeholder="What's happening?"
           rows="3"
         />

@@ -32,6 +32,7 @@ Important files:
 - `PostCard`: displays one post and like button.
 - `ProfileDirectory`: searchable users list.
 - `ProfilePage`: profile header and profile-specific posts.
+- `MessagesView`: direct-message UI (frontend complete; backend messaging routes not yet implemented — API calls return 404).
 - `Avatar`, `Button`, `EmptyState`: small reusable UI components.
 
 ## Backend
@@ -70,6 +71,7 @@ username
 content
 created_at
 likes_count
+comments_count
 user_liked
 ```
 

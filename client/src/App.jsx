@@ -3,6 +3,7 @@ import { api } from './api/client.js';
 import AppShell from './components/AppShell.jsx';
 import EmptyState from './components/EmptyState.jsx';
 import Feed from './components/Feed.jsx';
+import MessagesView from './components/MessagesView.jsx';
 import ProfileDirectory from './components/ProfileDirectory.jsx';
 import ProfilePage from './components/ProfilePage.jsx';
 import PublicPage from './components/PublicPage.jsx';
@@ -205,6 +206,24 @@ export default function App() {
     }
   }
 
+  async function handleDeletePost(postId) {
+    setError('');
+    try {
+      await api.deletePost(postId);
+      setPosts((currentPosts) => currentPosts.filter((p) => p.id !== postId));
+      setSelectedProfile((profile) => {
+        if (!profile?.posts) return profile;
+        return {
+          ...profile,
+          posts: profile.posts.filter((p) => p.id !== postId),
+          posts_count: Math.max(0, (profile.posts_count || 0) - 1)
+        };
+      });
+    } catch (err) {
+      setError(err.message);
+    }
+  }
+
   async function handleLike(postId) {
     setError('');
     try {
@@ -255,8 +274,7 @@ export default function App() {
   if (loading) {
     return (
       <main className="boot-screen">
-        <div className="brand-mark">I</div>
-        <p>Loading Instigator</p>
+        <div className="brand-mark" aria-hidden="true" />
       </main>
     );
   }
@@ -295,6 +313,7 @@ export default function App() {
           posts={posts}
           onPost={handleCreatePost}
           onLike={handleLike}
+          onDelete={handleDeletePost}
           onOpenProfile={handleOpenProfile}
           busy={busy}
         />
@@ -313,8 +332,10 @@ export default function App() {
         <ProfilePage
           profile={myProfile}
           posts={myPosts}
+          currentUser={currentUser}
           isCurrentUser
           onLike={handleLike}
+          onDelete={handleDeletePost}
           onOpenProfile={handleOpenProfile}
         />
       ) : null}
@@ -323,14 +344,24 @@ export default function App() {
         <ProfilePage
           profile={selectedProfile}
           posts={selectedProfile.posts || []}
+          currentUser={currentUser}
           isCurrentUser={selectedProfile.id === currentUser.id}
           onLike={handleLike}
+          onDelete={handleDeletePost}
           onOpenProfile={handleOpenProfile}
         />
       ) : null}
 
       {activeView === 'profile' && !selectedProfile ? (
         <EmptyState title="Profile unavailable" text="Choose a profile from the directory." />
+      ) : null}
+
+      {activeView === 'messages' ? (
+        <MessagesView
+          currentUser={currentUser}
+          users={users}
+          onOpenProfile={handleOpenProfile}
+        />
       ) : null}
     </AppShell>
   );
@@ -339,6 +370,7 @@ export default function App() {
 function getTitle(activeView, selectedProfile) {
   if (activeView === 'profiles') return 'Profiles';
   if (activeView === 'me') return 'My Profile';
+  if (activeView === 'messages') return 'Messages';
   if (activeView === 'profile') return selectedProfile?.username || 'Profile';
   return 'Home';
 }

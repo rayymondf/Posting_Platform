@@ -2,7 +2,7 @@ import Composer from './Composer.jsx';
 import EmptyState from './EmptyState.jsx';
 import PostCard from './PostCard.jsx';
 
-export default function Feed({ currentUser, posts, onPost, onLike, onOpenProfile, busy }) {
+export default function Feed({ currentUser, posts, onPost, onLike, onDelete, onOpenProfile, busy }) {
   return (
     <>
       <Composer currentUser={currentUser} onSubmit={onPost} disabled={busy} />
@@ -12,7 +12,9 @@ export default function Feed({ currentUser, posts, onPost, onLike, onOpenProfile
             <PostCard
               key={post.id}
               post={post}
+              currentUser={currentUser}
               onLike={onLike}
+              onDelete={onDelete}
               onOpenProfile={onOpenProfile}
             />
           ))

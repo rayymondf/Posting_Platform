@@ -72,10 +72,27 @@ async function initializeDatabase() {
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
 
+      CREATE TABLE IF NOT EXISTS conversations (
+        id SERIAL PRIMARY KEY,
+        user1_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        user2_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE(user1_id, user2_id)
+      );
+
+      CREATE TABLE IF NOT EXISTS messages (
+        id SERIAL PRIMARY KEY,
+        conversation_id INTEGER NOT NULL REFERENCES conversations(id) ON DELETE CASCADE,
+        sender_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        content TEXT NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+
       CREATE INDEX IF NOT EXISTS idx_posts_user_id ON posts(user_id);
       CREATE INDEX IF NOT EXISTS idx_posts_created_at ON posts(created_at DESC);
       CREATE INDEX IF NOT EXISTS idx_likes_post_id ON likes(post_id);
       CREATE INDEX IF NOT EXISTS idx_comments_post_id ON comments(post_id);
+      CREATE INDEX IF NOT EXISTS idx_messages_conversation_id ON messages(conversation_id);
     `);
     console.log('Database initialized successfully');
   } catch (err) {
@@ -196,6 +213,10 @@ app.post('/api/auth/register', async (req, res) => {
 
   if (username.length > 50) {
     return res.status(400).json({ error: 'Username must be 50 characters or fewer' });
+  }
+
+  if (password.length < 6) {
+    return res.status(400).json({ error: 'Password must be at least 6 characters' });
   }
 
   try {
@@ -564,6 +585,141 @@ app.get('/api/users/:id', async (req, res) => {
   } catch (err) {
     console.error('Error fetching user:', err);
     res.status(500).json({ error: 'Failed to fetch user' });
+  }
+});
+
+// Messaging Routes
+
+// GET /api/conversations — list all conversations for the current user
+app.get('/api/conversations', (req, res, next) => {
+  if (!req.isAuthenticated()) return res.status(401).json({ error: 'Must be logged in' });
+  next();
+}, async (req, res) => {
+  const userId = req.user.id;
+  try {
+    const result = await pool.query(`
+      SELECT c.id,
+             CASE WHEN c.user1_id = $1 THEN c.user2_id ELSE c.user1_id END AS other_user_id,
+             CASE WHEN c.user1_id = $1 THEN u2.username ELSE u1.username END AS other_username,
+             (SELECT content FROM messages WHERE conversation_id = c.id ORDER BY created_at DESC LIMIT 1) AS last_message
+      FROM conversations c
+      JOIN users u1 ON c.user1_id = u1.id
+      JOIN users u2 ON c.user2_id = u2.id
+      WHERE c.user1_id = $1 OR c.user2_id = $1
+      ORDER BY (SELECT created_at FROM messages WHERE conversation_id = c.id ORDER BY created_at DESC LIMIT 1) DESC NULLS LAST
+    `, [userId]);
+    res.json(result.rows);
+  } catch (err) {
+    console.error('Error fetching conversations:', err);
+    res.status(500).json({ error: 'Failed to fetch conversations' });
+  }
+});
+
+// POST /api/conversations — get or create a DM thread with another user
+app.post('/api/conversations', (req, res, next) => {
+  if (!req.isAuthenticated()) return res.status(401).json({ error: 'Must be logged in' });
+  next();
+}, async (req, res) => {
+  const userId = req.user.id;
+  const recipientId = Number(req.body.recipientId);
+
+  if (!recipientId || recipientId === userId) {
+    return res.status(400).json({ error: 'Invalid recipient' });
+  }
+
+  try {
+    const recipientCheck = await pool.query('SELECT id FROM users WHERE id = $1', [recipientId]);
+    if (recipientCheck.rows.length === 0) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    const [user1_id, user2_id] = userId < recipientId ? [userId, recipientId] : [recipientId, userId];
+
+    const result = await pool.query(`
+      INSERT INTO conversations (user1_id, user2_id)
+      VALUES ($1, $2)
+      ON CONFLICT (user1_id, user2_id) DO UPDATE SET id = conversations.id
+      RETURNING id
+    `, [user1_id, user2_id]);
+
+    res.json({ id: result.rows[0].id });
+  } catch (err) {
+    console.error('Error creating conversation:', err);
+    res.status(500).json({ error: 'Failed to create conversation' });
+  }
+});
+
+// GET /api/conversations/:id/messages — fetch messages in a conversation
+app.get('/api/conversations/:id/messages', (req, res, next) => {
+  if (!req.isAuthenticated()) return res.status(401).json({ error: 'Must be logged in' });
+  next();
+}, async (req, res) => {
+  const userId = req.user.id;
+  const convId = req.params.id;
+  try {
+    const access = await pool.query(
+      'SELECT id FROM conversations WHERE id = $1 AND (user1_id = $2 OR user2_id = $2)',
+      [convId, userId]
+    );
+    if (access.rows.length === 0) return res.status(403).json({ error: 'Forbidden' });
+
+    const result = await pool.query(
+      'SELECT id, sender_id, content, created_at FROM messages WHERE conversation_id = $1 ORDER BY created_at ASC',
+      [convId]
+    );
+    res.json(result.rows);
+  } catch (err) {
+    console.error('Error fetching messages:', err);
+    res.status(500).json({ error: 'Failed to fetch messages' });
+  }
+});
+
+// POST /api/conversations/:id/messages — send a message
+app.post('/api/conversations/:id/messages', (req, res, next) => {
+  if (!req.isAuthenticated()) return res.status(401).json({ error: 'Must be logged in' });
+  next();
+}, async (req, res) => {
+  const userId = req.user.id;
+  const convId = req.params.id;
+  const content = req.body.content?.trim();
+
+  if (!content) return res.status(400).json({ error: 'Message content required' });
+  if (content.length > 1000) return res.status(400).json({ error: 'Message must be 1000 characters or fewer' });
+
+  try {
+    const access = await pool.query(
+      'SELECT id FROM conversations WHERE id = $1 AND (user1_id = $2 OR user2_id = $2)',
+      [convId, userId]
+    );
+    if (access.rows.length === 0) return res.status(403).json({ error: 'Forbidden' });
+
+    const result = await pool.query(
+      'INSERT INTO messages (conversation_id, sender_id, content) VALUES ($1, $2, $3) RETURNING id, sender_id, content, created_at',
+      [convId, userId, content]
+    );
+    res.status(201).json(result.rows[0]);
+  } catch (err) {
+    console.error('Error sending message:', err);
+    res.status(500).json({ error: 'Failed to send message' });
+  }
+});
+
+// DELETE /api/messages/:id — delete own message
+app.delete('/api/messages/:id', (req, res, next) => {
+  if (!req.isAuthenticated()) return res.status(401).json({ error: 'Must be logged in' });
+  next();
+}, async (req, res) => {
+  const userId = req.user.id;
+  try {
+    const msgResult = await pool.query('SELECT sender_id FROM messages WHERE id = $1', [req.params.id]);
+    if (msgResult.rows.length === 0) return res.status(404).json({ error: 'Message not found' });
+    if (msgResult.rows[0].sender_id !== userId) return res.status(403).json({ error: 'Unauthorized' });
+
+    await pool.query('DELETE FROM messages WHERE id = $1', [req.params.id]);
+    res.json({ message: 'Message deleted' });
+  } catch (err) {
+    console.error('Error deleting message:', err);
+    res.status(500).json({ error: 'Failed to delete message' });
   }
 });
 

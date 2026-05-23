@@ -15,7 +15,7 @@ Install these first:
 From the project folder:
 
 ```powershell
-cd D:\coding\modern_message
+cd posting_dashboard_project
 npm install
 ```
 
@@ -142,7 +142,7 @@ taskkill /PID <PID_NUMBER> /F
 
 ## Manual Test Checklist
 
-- Sign up with a new username.
+- Sign up with a new username and a password of at least 6 characters.
 - Log out and sign back in.
 - Continue as Guest.
 - Create a post from Home.

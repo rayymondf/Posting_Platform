@@ -35,7 +35,7 @@ Express server
   talks to PostgreSQL with pg
 
 PostgreSQL
-  stores users, posts, likes, and the unused comments table
+  stores users, posts, likes, and comments
 ```
 
 ## Development Ports
@@ -62,7 +62,7 @@ The database port is part of `DATABASE_URL`. It is not the same as `PORT` or `VI
 - `users`: account records, including the reusable Guest account.
 - `posts`: post content and author relationship.
 - `likes`: one like per user per post.
-- `comments`: currently created by the server but not used in the UI.
+- `comments`: comment content and author relationship. API routes exist (`GET` and `POST /api/posts/:id/comments`) but the UI does not currently use them.
 
 ## UI Shape
 
@@ -83,19 +83,24 @@ The database port is part of `DATABASE_URL`. It is not the same as `PORT` or `VI
 /profiles       Profiles directory
 /profiles/:id   Individual profile page
 /me             Current user's profile
+/messages       Messages (UI present, backend not yet implemented)
 ```
 
 ## API Summary
 
 ```txt
-POST /api/auth/register
-POST /api/auth/login
-POST /api/auth/guest-login
-POST /api/auth/logout
-GET  /api/auth/me
-GET  /api/posts
-POST /api/posts
-POST /api/posts/:id/like
-GET  /api/users
-GET  /api/users/:id
+POST   /api/auth/register
+POST   /api/auth/login
+POST   /api/auth/guest-login
+POST   /api/auth/logout
+GET    /api/auth/me
+GET    /api/posts
+POST   /api/posts
+GET    /api/posts/:id
+DELETE /api/posts/:id
+POST   /api/posts/:id/like
+GET    /api/posts/:id/comments
+POST   /api/posts/:id/comments
+GET    /api/users
+GET    /api/users/:id
 ```
