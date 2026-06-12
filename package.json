@@ -1,7 +1,7 @@
 {
-  "name": "instigator",
+  "name": "buildboard",
   "version": "1.0.0",
-  "description": "A full-stack social posting app built with React, Express, and PostgreSQL",
+  "description": "BuildBoard — Engineering Project Collaboration Platform. Share projects, post build logs, recruit teammates.",
   "main": "server.js",
   "scripts": {
     "build": "vite build",
@@ -9,13 +9,15 @@
     "client:dev": "node node_modules/vite/bin/vite.js --host 0.0.0.0",
     "server:dev": "node node_modules/nodemon/bin/nodemon.js server.js",
     "start": "node server.js",
+    "seed": "node scripts/seed.js",
     "predev": "npm run check:ports",
     "dev": "concurrently -k -n server,client \"node node_modules/nodemon/bin/nodemon.js server.js\" \"node node_modules/vite/bin/vite.js --host 0.0.0.0\"",
     "test": "npm run build && node --check server.js"
   },
   "keywords": [
-    "messaging",
-    "social",
+    "engineering",
+    "collaboration",
+    "projects",
     "full-stack"
   ],
   "author": "",

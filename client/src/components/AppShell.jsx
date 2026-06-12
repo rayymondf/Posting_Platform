@@ -1,20 +1,30 @@
-import { Home, LogOut, MessageCircle, UserRound, Users } from 'lucide-react';
+import { FolderOpen, Home, LogOut, MessageCircle, UserRound, Users } from 'lucide-react';
 import Avatar from './Avatar.jsx';
 
 const navItems = [
   { id: 'feed', label: 'Home', icon: Home },
-  { id: 'profiles', label: 'Profiles', icon: Users },
+  { id: 'projects', label: 'Projects', icon: FolderOpen },
+  { id: 'profiles', label: 'Engineers', icon: Users },
   { id: 'messages', label: 'Messages', icon: MessageCircle },
-  { id: 'me', label: 'My Profile', icon: UserRound }
+  { id: 'me', label: 'My Profile', icon: UserRound },
 ];
 
 export default function AppShell({ activeView, currentUser, title, children, onLogout, onNavigate }) {
+  const isProjectView = activeView === 'project' || activeView === 'editProject' || activeView === 'newProject';
+  const isProfileView = activeView === 'profile' || activeView === 'me';
+
   return (
     <div className="app-shell">
       <aside className="sidebar">
+        <div className="sidebar-brand" onClick={() => onNavigate('feed')} role="button" tabIndex={0} onKeyDown={(e) => e.key === 'Enter' && onNavigate('feed')}>
+          <span className="brand-icon">⚡</span>
+          <span className="brand-name nav-label">BuildBoard</span>
+        </div>
         <nav aria-label="Primary">
           {navItems.map((item) => {
-            const isActive = activeView === item.id || (activeView === 'profile' && item.id === 'profiles');
+            const isActive = activeView === item.id
+              || (item.id === 'projects' && isProjectView)
+              || (item.id === 'profiles' && activeView === 'profile');
             return (
               <button
                 key={item.id}
@@ -33,10 +43,10 @@ export default function AppShell({ activeView, currentUser, title, children, onL
 
         <div className="sidebar-footer">
           <button className="account-pill" type="button" onClick={() => onNavigate('me')}>
-            <Avatar name={currentUser.username} size="sm" />
+            <Avatar name={currentUser.display_name || currentUser.username} size="sm" />
             <span className="account-pill-info">
-              <strong>{currentUser.username}</strong>
-              <small>@{currentUser.username.toLowerCase()}</small>
+              <strong>{currentUser.display_name || currentUser.username}</strong>
+              <small>@{currentUser.username}</small>
             </span>
           </button>
           <button className="logout-btn" type="button" onClick={onLogout} aria-label="Logout">
@@ -47,7 +57,7 @@ export default function AppShell({ activeView, currentUser, title, children, onL
       </aside>
 
       <main className="timeline">
-        {activeView !== 'profile' && activeView !== 'me' && activeView !== 'messages' ? (
+        {!isProjectView && !isProfileView && activeView !== 'messages' ? (
           <header className="timeline-header">
             <h1>{title}</h1>
           </header>
@@ -57,7 +67,9 @@ export default function AppShell({ activeView, currentUser, title, children, onL
 
       <nav className="mobile-nav" aria-label="Mobile">
         {navItems.map((item) => {
-          const isActive = activeView === item.id || (activeView === 'profile' && item.id === 'profiles');
+          const isActive = activeView === item.id
+            || (item.id === 'projects' && isProjectView)
+            || (item.id === 'profiles' && activeView === 'profile');
           return (
             <button
               key={item.id}
