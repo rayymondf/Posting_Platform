@@ -21,7 +21,10 @@ if (!databaseUrl) throw new Error('DATABASE_URL is required when NODE_ENV=produc
 if (!sessionSecret) throw new Error('SESSION_SECRET is required when NODE_ENV=production');
 
 // ============= Database =============
-const pool = new pg.Pool({ connectionString: databaseUrl });
+const pool = new pg.Pool({
+  connectionString: databaseUrl,
+  ssl: databaseUrl.includes('neon.tech') || isProduction ? { rejectUnauthorized: false } : false
+});
 const sessionStore = new PgSession({ pool, tableName: 'user_sessions', createTableIfMissing: true });
 
 async function initializeDatabase() {
