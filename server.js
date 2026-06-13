@@ -28,6 +28,13 @@ const pool = new pg.Pool({
 const sessionStore = new PgSession({ pool, tableName: 'user_sessions', createTableIfMissing: true });
 
 async function initializeDatabase() {
+  // Drop legacy tables from old schema (posts-based) so new schema can be created cleanly
+  await pool.query(`
+    DROP TABLE IF EXISTS likes CASCADE;
+    DROP TABLE IF EXISTS comments CASCADE;
+    DROP TABLE IF EXISTS posts CASCADE;
+  `);
+
   await pool.query(`
     CREATE TABLE IF NOT EXISTS users (
       id SERIAL PRIMARY KEY,
