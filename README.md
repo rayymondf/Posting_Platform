@@ -4,7 +4,7 @@
 
 BuildBoard is a full-stack platform for student engineers, makers, robotics teams, and software/hardware builders to share technical projects, post build logs, recruit teammates, search for projects by skill, and message collaborators.
 
-**Live demo:** https://social-media-project-1-d15l.onrender.com/
+**Live demo:** https://posting-platform.onrender.com/
 
 ---
 
