@@ -314,8 +314,4 @@ DELETE /api/messages/:id
 
 ---
 
-## Resume Bullets
 
-- Built **BuildBoard**, a full-stack engineering collaboration platform (React 19 + Express + PostgreSQL) with project pages, build log updates, team recruitment, and direct messaging
-- Implemented **object-level authorization** across 25+ API endpoints — owner/admin/member permission model, parameterized SQL, unique-constraint-enforced duplicate prevention
-- Designed a **ranked activity feed** using a SQL scoring formula (likes × 2 + comments × 3 − age decay) and composable ILIKE search with category/status/tag filters
