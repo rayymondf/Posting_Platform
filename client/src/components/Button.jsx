@@ -6,10 +6,12 @@ export default function Button({
   type = 'button',
   ...props
 }) {
+  // Map variant names to CSS classes
+  const variantClass = variant === 'primary' ? 'btn' : `btn btn-${variant}`;
   return (
-    <button className={`btn btn-${variant} ${className}`.trim()} type={type} {...props}>
-      {Icon ? <Icon size={18} strokeWidth={2.4} aria-hidden="true" /> : null}
-      <span>{children}</span>
+    <button className={`${variantClass} ${className}`.trim()} type={type} {...props}>
+      {Icon ? <Icon size={16} strokeWidth={2} aria-hidden="true" /> : null}
+      {children}
     </button>
   );
 }

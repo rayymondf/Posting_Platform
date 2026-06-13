@@ -224,7 +224,7 @@ export default function App() {
   if (loading) {
     return (
       <main className="boot-screen">
-        <div className="boot-brand">⚡ BuildBoard</div>
+        <div className="boot-brand">BuildBoard</div>
       </main>
     );
   }
@@ -348,7 +348,7 @@ function FeedView({ updates, sort, loading, currentUser, onSortChange, onLike, o
     <div className="feed-view">
       <div className="feed-header">
         <div>
-          <h2>{sort === 'ranked' ? '⚡ Active Engineering Projects' : '🕐 Most Recent'}</h2>
+          <h2>{sort === 'ranked' ? 'Active Projects' : 'Most Recent'}</h2>
           <p className="feed-subtitle">Build logs from the community</p>
         </div>
         <div className="feed-sort">

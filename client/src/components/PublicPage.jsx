@@ -3,6 +3,13 @@ import Button from './Button.jsx';
 
 const CATEGORIES = ['Robotics', 'Firmware', 'AI/ML', 'PCB Design', 'Web Development', 'Embedded Systems', 'CAD/Mechanical', 'Data/Cloud'];
 
+const FEATURES = [
+  { icon: '◻', title: 'Project Pages', desc: 'Detailed pages with status, GitHub links, and team members.' },
+  { icon: '◻', title: 'Build Logs', desc: 'Post milestone updates as you build. Show your process.' },
+  { icon: '◻', title: 'Team Recruitment', desc: 'Post open roles, review requests, and build your team.' },
+  { icon: '◻', title: 'Messaging', desc: 'Direct message other builders and collaborators.' },
+];
+
 export default function PublicPage({ mode, onModeChange, onSubmit, onGuest, error, busy }) {
   const isSignup = mode === 'signup';
   const showForm = mode === 'signin' || mode === 'signup';
@@ -20,8 +27,8 @@ export default function PublicPage({ mode, onModeChange, onSubmit, onGuest, erro
         <div className="public-left">
           <div className="public-left-inner">
             <div className="public-logo">⚡</div>
-            <h1 className="public-tagline">BuildBoard</h1>
-            <p className="public-sub">Engineering Project Collaboration Platform</p>
+            <h1 className="public-tagline">Build<br />Board</h1>
+            <p className="public-sub">Engineering collaboration for student teams and makers.</p>
           </div>
         </div>
         <div className="public-right">
@@ -46,7 +53,7 @@ export default function PublicPage({ mode, onModeChange, onSubmit, onGuest, erro
               </button>
               <div className="public-divider"><span>or</span></div>
               <Button variant="soft" onClick={onGuest} disabled={busy}>Try demo account</Button>
-              <p className="guest-note">Demo account has seed data. No registration required.</p>
+              <p className="guest-note">No registration required. Includes seed data.</p>
             </form>
           </section>
         </div>
@@ -57,7 +64,7 @@ export default function PublicPage({ mode, onModeChange, onSubmit, onGuest, erro
   return (
     <main className="landing-page">
       <header className="landing-header">
-        <div className="landing-logo">⚡ BuildBoard</div>
+        <div className="landing-logo">BuildBoard</div>
         <div className="landing-header-actions">
           <button className="btn-ghost" onClick={() => onModeChange('signin')}>Sign in</button>
           <Button onClick={() => onModeChange('signup')}>Get started</Button>
@@ -69,19 +76,39 @@ export default function PublicPage({ mode, onModeChange, onSubmit, onGuest, erro
           <div className="hero-badge">For student engineers &amp; makers</div>
           <h1 className="hero-title">Share your build.<br />Find your team.</h1>
           <p className="hero-sub">
-            BuildBoard is the collaboration platform for student engineers — create project pages,
-            post build logs, recruit technical teammates, and message collaborators.
+            Create project pages, post build logs, recruit teammates, and message collaborators — all in one place.
           </p>
           <div className="hero-actions">
-            <Button onClick={() => onModeChange('signup')}>Explore Projects</Button>
-            <Button variant="soft" onClick={onGuest} disabled={busy}>Try Demo Account</Button>
+            <Button onClick={() => onModeChange('signup')}>Get started free</Button>
+            <Button variant="soft" onClick={onGuest} disabled={busy}>View demo</Button>
           </div>
-          {error ? <p className="form-error" style={{ marginTop: '12px' }}>{error}</p> : null}
+          {error ? <p className="form-error" style={{ marginTop: '8px' }}>{error}</p> : null}
         </div>
       </section>
 
+      <div className="landing-divider" />
+
+      <section className="landing-features">
+        <div className="landing-section-inner">
+          <p className="landing-section-label">Features</p>
+          <h2 className="landing-section-title">Everything your team needs</h2>
+          <div className="features-grid">
+            {FEATURES.map((f) => (
+              <div className="feature-card" key={f.title}>
+                <div className="feature-icon">⬡</div>
+                <h3>{f.title}</h3>
+                <p>{f.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <div className="landing-divider" />
+
       <section className="landing-categories">
         <div className="landing-section-inner">
+          <p className="landing-section-label">Explore</p>
           <h2 className="landing-section-title">Find teammates by skill</h2>
           <div className="category-grid">
             {CATEGORIES.map((cat) => (
@@ -91,36 +118,8 @@ export default function PublicPage({ mode, onModeChange, onSubmit, onGuest, erro
         </div>
       </section>
 
-      <section className="landing-features">
-        <div className="landing-section-inner">
-          <h2 className="landing-section-title">Everything your team needs</h2>
-          <div className="features-grid">
-            <div className="feature-card">
-              <div className="feature-icon">📋</div>
-              <h3>Project Pages</h3>
-              <p>Create detailed pages for your engineering builds — description, status, GitHub link, and team members.</p>
-            </div>
-            <div className="feature-card">
-              <div className="feature-icon">🔧</div>
-              <h3>Build Logs</h3>
-              <p>Post milestone updates as you build. Show employers your process, not just the final result.</p>
-            </div>
-            <div className="feature-card">
-              <div className="feature-icon">🧑‍🤝‍🧑</div>
-              <h3>Team Recruitment</h3>
-              <p>Post open roles, review join requests, and build a team with the right skills.</p>
-            </div>
-            <div className="feature-card">
-              <div className="feature-icon">💬</div>
-              <h3>Messaging</h3>
-              <p>Direct message other builders. Coordinate, collaborate, and give feedback.</p>
-            </div>
-          </div>
-        </div>
-      </section>
-
       <footer className="landing-footer">
-        <p>BuildBoard · Engineering Project Collaboration Platform</p>
+        BuildBoard · Engineering Project Collaboration Platform
       </footer>
     </main>
   );

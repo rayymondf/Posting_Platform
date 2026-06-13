@@ -6,7 +6,7 @@ const navItems = [
   { id: 'projects', label: 'Projects', icon: FolderOpen },
   { id: 'profiles', label: 'Engineers', icon: Users },
   { id: 'messages', label: 'Messages', icon: MessageCircle },
-  { id: 'me', label: 'My Profile', icon: UserRound },
+  { id: 'me', label: 'Profile', icon: UserRound },
 ];
 
 export default function AppShell({ activeView, currentUser, title, children, onLogout, onNavigate }) {
@@ -16,15 +16,23 @@ export default function AppShell({ activeView, currentUser, title, children, onL
   return (
     <div className="app-shell">
       <aside className="sidebar">
-        <div className="sidebar-brand" onClick={() => onNavigate('feed')} role="button" tabIndex={0} onKeyDown={(e) => e.key === 'Enter' && onNavigate('feed')}>
+        <div
+          className="sidebar-brand"
+          onClick={() => onNavigate('feed')}
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => e.key === 'Enter' && onNavigate('feed')}
+        >
           <span className="brand-icon">⚡</span>
           <span className="brand-name nav-label">BuildBoard</span>
         </div>
+
         <nav aria-label="Primary">
           {navItems.map((item) => {
-            const isActive = activeView === item.id
-              || (item.id === 'projects' && isProjectView)
-              || (item.id === 'profiles' && activeView === 'profile');
+            const isActive =
+              activeView === item.id ||
+              (item.id === 'projects' && isProjectView) ||
+              (item.id === 'profiles' && activeView === 'profile');
             return (
               <button
                 key={item.id}
@@ -34,7 +42,7 @@ export default function AppShell({ activeView, currentUser, title, children, onL
                 type="button"
                 onClick={() => onNavigate(item.id)}
               >
-                <item.icon size={22} aria-hidden="true" />
+                <item.icon size={18} strokeWidth={isActive ? 2.5 : 1.75} aria-hidden="true" />
                 <span className="nav-label">{item.label}</span>
               </button>
             );
@@ -50,8 +58,8 @@ export default function AppShell({ activeView, currentUser, title, children, onL
             </span>
           </button>
           <button className="logout-btn" type="button" onClick={onLogout} aria-label="Logout">
-            <LogOut size={20} />
-            <span className="nav-label">Logout</span>
+            <LogOut size={16} strokeWidth={1.75} />
+            <span className="nav-label">Sign out</span>
           </button>
         </div>
       </aside>
@@ -67,9 +75,10 @@ export default function AppShell({ activeView, currentUser, title, children, onL
 
       <nav className="mobile-nav" aria-label="Mobile">
         {navItems.map((item) => {
-          const isActive = activeView === item.id
-            || (item.id === 'projects' && isProjectView)
-            || (item.id === 'profiles' && activeView === 'profile');
+          const isActive =
+            activeView === item.id ||
+            (item.id === 'projects' && isProjectView) ||
+            (item.id === 'profiles' && activeView === 'profile');
           return (
             <button
               key={item.id}
@@ -79,7 +88,7 @@ export default function AppShell({ activeView, currentUser, title, children, onL
               type="button"
               onClick={() => onNavigate(item.id)}
             >
-              <item.icon size={22} aria-hidden="true" />
+              <item.icon size={20} strokeWidth={isActive ? 2.5 : 1.75} aria-hidden="true" />
             </button>
           );
         })}
