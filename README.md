@@ -327,11 +327,6 @@ In your Render service dashboard go to **Environment** and add these:
 - No automated test suite yet (build verification only via `npm test`)
 - Private project visibility is enforced on the API but the frontend always shows public projects
 
----
-
-## Portfolio Description
-
-> BuildBoard is a full-stack collaboration platform for student engineers to share technical projects, post build logs, recruit teammates, and message collaborators. Built with React 19, Express, PostgreSQL, Passport.js, bcrypt, and session-based authentication, then extended beyond standard CRUD with project pages, team roles, join requests with accept/reject workflow, skill-based search and filtering, ranked project feed scoring, object-level authorization, and deployment-ready configuration.
 
 ---
 
