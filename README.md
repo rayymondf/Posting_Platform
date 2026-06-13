@@ -287,13 +287,34 @@ DELETE /api/messages/:id
 
 ## Deployment (Render + Neon)
 
-1. Create a Neon PostgreSQL database and copy the connection string
-2. Create a new Render Web Service pointing to this repo
-3. Set Build Command: `npm install && npm run build`
-4. Set Start Command: `npm start`
-5. Add environment variables: `DATABASE_URL`, `SESSION_SECRET`, `CLIENT_URL`, `NODE_ENV=production`
-6. Deploy — tables are created automatically on first startup
-7. Run `npm run seed` locally against the production DB once to add demo data (optional)
+### 1. Neon Database
+1. Go to [neon.tech](https://neon.tech) and create a free project
+2. Copy the connection string from the Neon dashboard (it looks like `postgresql://user:password@host/dbname?sslmode=require`)
+
+### 2. Render Web Service
+1. Go to [render.com](https://render.com) → **New → Web Service**
+2. Connect your GitHub repo
+3. Set the following:
+   - **Build Command:** `npm install && npm run build`
+   - **Start Command:** `npm start`
+   - **Node version:** 18 or higher (set under Environment → Node Version)
+
+### 3. Environment Variables on Render
+In your Render service dashboard go to **Environment** and add these:
+
+| Key | Value |
+|---|---|
+| `DATABASE_URL` | Your full Neon connection string, e.g. `postgresql://neondb_owner:yourpassword@ep-xxxx.neon.tech/neondb?sslmode=require` |
+| `SESSION_SECRET` | Any long random string, e.g. `my-super-secret-string-change-this-123` |
+| `CLIENT_URL` | Your Render app URL, e.g. `https://your-app-name.onrender.com` |
+| `NODE_ENV` | `production` |
+
+> **Note:** Do NOT set `PORT` or `VITE_PORT` on Render — Render assigns the port automatically via its own `PORT` environment variable.
+
+### 4. Deploy
+4. Click **Deploy** — Render will run `npm install && npm run build` then `npm start`
+5. Tables are created automatically on first startup
+6. Optionally seed demo data by running `npm run seed` locally with the Neon `DATABASE_URL` in your `.env`
 
 ---
 
